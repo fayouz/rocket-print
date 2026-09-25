@@ -10,6 +10,7 @@ export default defineAppConfig({
     },
   },
   rocket: {
+    id: 'print',
     name: 'Rocket Print',
     icon: 'i-lucide-printer',
     // Login page subtitle.

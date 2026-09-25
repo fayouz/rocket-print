@@ -13,6 +13,9 @@ x-api-env: &api-env
   SETUP_TOKEN: ${SETUP_TOKEN:-}
   # Encrypts the secrets stored in the database (empty: derived from APP_SECRET).
   SECRETS_ENCRYPTION_KEY: ${SECRETS_ENCRYPTION_KEY:-}
+  # Printing: maximum document size (bytes), days the printed documents are kept.
+  PRINT_MAX_FILE_SIZE: ${PRINT_MAX_FILE_SIZE:-52428800}
+  PRINT_RETENTION_DAYS: ${PRINT_RETENTION_DAYS:-7}
   CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$$}
   LDAP_ENABLED: ${LDAP_ENABLED:-0}
   LDAP_URL: ${LDAP_URL:-ldap://ldap:389}

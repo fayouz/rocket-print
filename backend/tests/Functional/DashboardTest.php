@@ -43,7 +43,7 @@ final class DashboardTest extends WebTestCase
         self::assertContains('user.created', array_column($stats['activity'], 'type'));
 
         $services = array_column($stats['health']['services'], null, 'id');
-        self::assertSame(['database', 'queue', 'ldap', 'sso', 'storage'], array_keys($services));
+        self::assertSame(['database', 'queue', 'ldap', 'sso', 'printers', 'storage'], array_keys($services));
         self::assertSame('operational', $services['database']['status']);
         self::assertSame('disabled', $services['ldap']['status']);
         self::assertSame('operational', $services['queue']['status']);

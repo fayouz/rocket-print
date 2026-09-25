@@ -4,11 +4,9 @@
 
 1. Sur GitHub, ouvre le dépôt, choisis la branche qui contient la démo, puis **Code → Codespaces → Create codespace on …**.
 2. Attends la fin de la commande de démarrage dans le terminal (5 à 10 minutes au premier lancement, le temps de construire les images). Elle affiche les URLs de la démo.
-3. Dans l'onglet **Ports**, ouvre « Rocket Print » (3000), « Démo CRM » (4000), « Documentation et changelog » (3001) ou « Mailpit » (8025). Depuis Rocket Print, `/docs` et `/changelog` y mènent aussi.
+3. Dans l'onglet **Ports**, ouvre « Rocket Print » (3300) ou « Documentation et changelog » (3301).
 
-Les ports 3000 et 4000 sont rendus publics automatiquement : la page Démo CRM charge le composeur depuis le port 3000. Si ça échoue, passe-les en *Public* (clic droit → *Port Visibility*).
-
-> ⚠️ Un port public est accessible à toute personne qui a l'URL, et les mots de passe de démo sont publics. Arrête le codespace quand tu as fini (menu Codespaces → *Stop codespace*). Le quota gratuit de GitHub est limité en heures par mois.
+> ⚠️ Les mots de passe de démo sont publics. Arrête le codespace quand tu as fini (menu Codespaces → *Stop codespace*).
 
 Pour relancer la démo à la main : `bash demo/codespaces/start.sh`.
 
@@ -20,15 +18,15 @@ Pré-requis : Docker avec Compose v2.24 ou plus récent.
 docker compose -f compose.yaml -f compose.demo.yaml up -d --build
 ```
 
-Le premier démarrage prend quelques minutes (build des images). Le service `demo-seed` prépare la base, charge les données de démo et synchronise l'annuaire LDAP, puis s'arrête. Pour suivre sa progression : `docker compose -f compose.yaml -f compose.demo.yaml logs -f demo-seed`.
+Le service `demo-seed` prépare la base, charge les données de démo et synchronise l'annuaire LDAP, puis s'arrête : `docker compose -f compose.yaml -f compose.demo.yaml logs -f demo-seed`.
 
 | Adresse | Contenu |
 |---|---|
-| http://localhost:3000 | Rocket Print |
-| http://localhost:4000 | « Démo CRM », une application tierce qui embarque le composeur (widget JavaScript, et web component sur `/web-component`) |
-| http://localhost:3001 | Documentation, et le changelog sur `/changelog` |
-| http://localhost:8025 | Mailpit : tous les emails envoyés arrivent ici, rien ne part vraiment |
-| http://localhost:8000/api/docs | Documentation de l'API |
+| http://localhost:3300 | Rocket Print |
+| http://localhost:3301 | Documentation, et le changelog sur `/changelog` |
+| http://localhost:8300/api/docs | Documentation de l'API |
+
+Le service `print-server` est un vrai serveur d'impression **Samba** : ce qu'on imprime sur « Laser 2e étage (Samba) » arrive dans son dossier `/printed` au lieu de sortir sur papier.
 
 ## Comptes
 
@@ -36,26 +34,29 @@ Le premier démarrage prend quelques minutes (build des images). Le service `dem
 |---|---|---|
 | `admin@example.org` | `demo-admin-password` | local, administrateur |
 | `alice@example.org` | `demo-alice-password` | local |
-| `marie.martin@example.org` | `password` | LDAP, admin via le groupe `mailer-admins` |
+| `marie.martin@example.org` | `password` | LDAP, administratrice via le groupe `rocket-admins` |
 | `jean.dupont@example.org` | `password` | LDAP |
 
 ## Scénarios à tester
 
-1. **Composer un email.** Connecte-toi avec `alice@example.org`, ouvre *Nouveau message*, puis *Importer un template* → « Bienvenue ». Modifie le texte et envoie. Le message apparaît dans *Envoyés* et dans Mailpit.
-2. **Créer un template.** Ouvre *Templates* → *Nouveau template*. Construis un email dans GrapesJS, enregistre, modifie et enregistre à nouveau. *Historique* permet ensuite de restaurer une version précédente.
-3. **Connexion LDAP.** Connecte-toi avec `marie.martin@example.org` / `password` : elle est administratrice grâce à son groupe LDAP. Dans *Utilisateurs*, *Synchroniser LDAP* relance la synchronisation.
-4. **Application tierce et impersonation.**
-   - Ouvre http://localhost:4000 et choisis l'utilisateur du CRM dans la liste : le composeur envoie en son nom.
-   - « Écrire à ce client » pré-remplit le destinataire et l'objet depuis le CRM ; les envois remontent dans le journal d'événements.
-   - En choisissant `admin@example.org`, le widget n'obtient pas pour autant les droits administrateur.
-5. **Sécurité de l'intégration.**
-   - En admin, dans *Applications*, désactive « Démo CRM » : le widget de la page http://localhost:4000 cesse de fonctionner.
-   - Retire `http://localhost:4000` des origines autorisées : le navigateur refuse d'afficher l'iframe.
+1. **Imprimer.** Connecte-toi avec `alice@example.org`, ouvre *Imprimer*, dépose un PDF, choisis « Laser 2e étage (Samba) » et 2 exemplaires. Dans *Mes impressions*, le document passe en « Imprimé ». Vérifie qu'il est arrivé :
+   ```bash
+   docker compose -f compose.yaml -f compose.demo.yaml exec print-server ls -l /printed
+   ```
+2. **Panne et reprise.** `docker compose -f compose.yaml -f compose.demo.yaml stop print-server`, puis imprime : le document attend entre les tentatives (1 puis 5 minutes), puis passe en « Échec ». Redémarre le serveur (`start print-server`) et clique sur *Réimprimer*. Le tableau de bord de l'admin montre l'imprimante en échec pendant la panne.
+3. **Administration.** Avec `admin@example.org`, ouvre *Administration → Imprimantes* : *Tester la connexion*, *Imprimer une page de test*, ajoute une imprimante (Samba, IPP ou dossier).
+4. **Application et impersonation.** Une application imprime au nom d'Alice :
+   ```bash
+   curl -X POST http://localhost:3300/api/print-jobs \
+     -H "Authorization: Bearer rpa_demo_rocket_print_do_not_use_in_production" \
+     -H "X-Impersonate-User: alice@example.org" -H "Accept: application/json" \
+     -F file=@document.pdf
+   ```
+   Le document apparaît dans *Mes impressions* d'Alice, avec le nom de l'application. En impersonnant `admin@example.org`, l'application n'obtient pas pour autant les droits administrateur.
+5. **Connexion LDAP.** Connecte-toi avec `marie.martin@example.org` / `password` : elle est administratrice grâce à son groupe LDAP.
 
 ## Réinitialiser
 
 ```bash
 docker compose -f compose.yaml -f compose.demo.yaml down -v
 ```
-
-> Cette démo utilise des mots de passe et un jeton d'application publics (`compose.demo.yaml`). Ne l'expose jamais sur Internet.

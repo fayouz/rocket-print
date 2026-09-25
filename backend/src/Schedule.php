@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Message\CheckServicesHealth;
+use App\Message\CleanUpPrintJobs;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
@@ -27,6 +28,8 @@ class Schedule implements ScheduleProviderInterface
             ->processOnlyLastMissedRun(true) // ensure only last missed task is run
             // Network checks of the LDAP server and of the OpenID Connect providers, shown on the dashboard.
             ->add(RecurringMessage::every('5 minutes', new CheckServicesHealth()))
+            // Documents of finished print jobs past PRINT_RETENTION_DAYS, jobs interrupted while printing.
+            ->add(RecurringMessage::every('1 hour', new CleanUpPrintJobs()))
         ;
     }
 }

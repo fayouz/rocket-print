@@ -2,6 +2,10 @@
 FROM dunglas/frankenphp:1-php8.4 AS base
 
 WORKDIR /app
+# smbclient: printers shared by Windows or Samba print servers.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends smbclient \
+    && rm -rf /var/lib/apt/lists/*
 RUN install-php-extensions pdo_pgsql intl opcache apcu ldap zip \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --link docker/php.ini $PHP_INI_DIR/conf.d/zz-app.ini

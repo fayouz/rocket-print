@@ -4,6 +4,8 @@ namespace App\Dashboard;
 
 use App\Entity\ServiceCheck;
 use App\Health\HealthChecker;
+use App\Health\ServiceProbeInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use App\Ldap\LdapSettings;
 use App\Repository\AuthenticationServerRepository;
 use App\Repository\ServiceCheckRepository;
@@ -34,6 +36,9 @@ final class PlatformHealth
         #[Autowire(env: 'resolve:DATA_DIR')] private readonly string $dataDir,
         private readonly ServiceCheckRepository $checks,
         private readonly AuthenticationServerRepository $servers,
+        /** @var iterable<ServiceProbeInterface> */
+        #[AutowireIterator('app.service_probe')]
+        private readonly iterable $probes = [],
     ) {
     }
 
@@ -49,6 +54,9 @@ final class PlatformHealth
         $services[] = $this->ldap($databaseUp, $checks['ldap'] ?? null);
         if ($databaseUp) {
             $services[] = $this->sso($checks);
+            foreach ($this->probes as $probe) {
+                $services[] = $this->probe($probe, $checks);
+            }
         }
         $services[] = $this->storage();
 
@@ -87,9 +95,10 @@ final class PlatformHealth
     /** @return array<string, mixed> */
     private function queue(): array
     {
-        $row = $this->db->fetchAssociative("SELECT COUNT(*) AS queued, MIN(created_at) AS oldest FROM messenger_messages WHERE queue_name = 'default' AND delivered_at IS NULL");
+        // Waiting since it became available: a delayed message (retry of a print job…) is not late before its time.
+        $row = $this->db->fetchAssociative("SELECT COUNT(*) AS queued, MIN(available_at) AS oldest FROM messenger_messages WHERE queue_name = 'default' AND delivered_at IS NULL");
         $failed = (int) $this->db->fetchOne("SELECT COUNT(*) FROM messenger_messages WHERE queue_name = 'failed'");
-        $delay = null === $row['oldest'] ? 0 : $this->clock->now()->getTimestamp() - (new \DateTimeImmutable($row['oldest']))->getTimestamp();
+        $delay = null === $row['oldest'] ? 0 : max(0, $this->clock->now()->getTimestamp() - (new \DateTimeImmutable($row['oldest']))->getTimestamp());
 
         return [
             'id' => 'queue',
@@ -173,6 +182,57 @@ final class PlatformHealth
             'detail' => match (true) {
                 [] !== $failing => \sprintf('%d sur %d en échec : %s', \count($failing), $total, implode(', ', $failing)),
                 $unchecked === $total => 'Pas encore vérifié',
+                default => implode(', ', array_column($items, 'name')),
+            },
+            'total' => $total,
+            'failing' => \count($failing),
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * A dependency declared by a domain module: last check of each of its targets.
+     *
+     * @param array<string, ServiceCheck> $checks
+     *
+     * @return array<string, mixed>
+     */
+    private function probe(ServiceProbeInterface $probe, array $checks): array
+    {
+        $items = [];
+        $failing = [];
+        foreach ($probe->targets() as $item => $target) {
+            $check = $checks[HealthChecker::probeCheckId($probe, (string) $item)] ?? null;
+            if (null !== $check && !$check->isOk()) {
+                $failing[] = $target['name'].' ('.$check->getDetail().')';
+            }
+            $items[] = [
+                'id' => (string) $item,
+                'name' => $target['name'],
+                'status' => null === $check ? self::UNKNOWN : ($check->isOk() ? self::OPERATIONAL : self::DOWN),
+                'check' => $check?->toArray(),
+            ];
+        }
+
+        $total = \count($items);
+        if (0 === $total) {
+            return ['id' => $probe->id(), 'label' => $probe->label(), 'status' => 'disabled', 'detail' => 'Non configuré', 'items' => []];
+        }
+        $unchecked = \count(array_filter($items, static fn (array $item) => self::UNKNOWN === $item['status']));
+
+        return [
+            'id' => $probe->id(),
+            'label' => $probe->label(),
+            'status' => match (true) {
+                \count($failing) === $total => self::DOWN,
+                [] !== $failing => self::DEGRADED,
+                $unchecked === $total => self::UNKNOWN,
+                default => self::OPERATIONAL,
+            },
+            'detail' => match (true) {
+                [] !== $failing => \sprintf('%d sur %d en échec : %s', \count($failing), $total, implode(', ', $failing)),
+                $unchecked === $total => 'Pas encore vérifié',
+                1 === $total => (string) ($items[0]['check']['detail'] ?? $items[0]['name']),
                 default => implode(', ', array_column($items, 'name')),
             },
             'total' => $total,

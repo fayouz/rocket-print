@@ -11,17 +11,25 @@ export default defineAppConfig({
   },
   rocket: {
     name: 'Rocket Print',
-    icon: 'i-lucide-rocket',
+    icon: 'i-lucide-printer',
     // Login page subtitle.
-    tagline: 'Connectez-vous avec votre compte local ou votre compte d’annuaire (LDAP).',
+    tagline: 'Imprimez sur les imprimantes de l’entreprise, depuis le navigateur ou vos applications.',
     // Main menu: the domain pages ("label" entries start a group).
-    navigation: [] as { label: string, icon?: string, to?: string, type?: 'label', exact?: boolean, admin?: boolean }[],
+    navigation: [
+      { label: 'Impression', type: 'label' },
+      { label: 'Imprimer', icon: 'i-lucide-printer', to: '/print' },
+      { label: 'Mes impressions', icon: 'i-lucide-list', to: '/jobs' },
+    ] as { label: string, icon?: string, to?: string, type?: 'label', exact?: boolean, admin?: boolean }[],
     // Extra entries of the Administration menu.
-    adminNavigation: [] as { label: string, icon: string, to: string }[],
+    adminNavigation: [
+      { label: 'Imprimantes', icon: 'i-lucide-printer-check', to: '/printers' },
+      { label: 'Toutes les impressions', icon: 'i-lucide-list-checks', to: '/jobs?all=1' },
+    ] as { label: string, icon: string, to: string }[],
     // "Services & raccourcis" of the dashboard, besides the documentation, changelog and API.
     shortcuts: [] as { label: string, description: string, icon: string, to: string, admin?: boolean }[],
     // Hero banner of the dashboard: one quote per day.
     quotes: [
+      ['Les paroles s’envolent, les écrits restent.', 'Proverbe latin'],
       ['La simplicité est la sophistication suprême.', 'Léonard de Vinci'],
       ['Ce qui se conçoit bien s’énonce clairement.', 'Nicolas Boileau'],
     ] as [string, string][],

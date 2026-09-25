@@ -1,6 +1,6 @@
 ---
 title: Rocket Print
-description: Envoyez des emails riches depuis Rocket Print ou directement depuis vos propres applications, grâce au composeur embarquable.
+description: Imprimez sur les imprimantes de l'entreprise depuis le navigateur ou depuis vos applications, via Samba, IPP ou CUPS.
 seo:
   title: Rocket Print — Documentation
 ---
@@ -8,19 +8,19 @@ seo:
 ::u-page-hero
 ---
 orientation: horizontal
-title: Des emails riches, partout dans vos applications.
+title: Les imprimantes de l'entreprise, à portée d'API.
 ---
 #description
-Rocket Print centralise l'envoi d'emails : composeur en texte enrichi, templates visuels versionnés, comptes LDAP, et un **composeur embarquable** que vos applications intègrent en quelques lignes, en toute sécurité.
+Rocket Print relie vos utilisateurs et vos applications aux imprimantes de l'entreprise : partages **Windows / Samba**, imprimantes réseau **IPP** et files **CUPS**. Files d'impression asynchrones, reprises automatiques, suivi de chaque document.
 
 #links
   :::u-button
   ---
-  to: /embed/overview
+  to: /api/print-jobs
   size: xl
   trailing-icon: i-lucide-arrow-right
   ---
-  Intégrer le composeur
+  Imprimer depuis une application
   :::
 
   :::u-button
@@ -35,18 +35,13 @@ Rocket Print centralise l'envoi d'emails : composeur en texte enrichi, templates
   :::
 
 #default
-  ```html [votre-page.html]
-  <script src="https://mailer.exemple.com/embed.js"></script>
-  <div id="mailer"></div>
-  <script>
-    RocketMailer.mount('#mailer', {
-      baseUrl: 'https://mailer.exemple.com',
-      applicationId: '0199…',
-      getToken: () => fetch('/rocket-print/token')
-        .then(r => r.json()).then(d => d.token),
-      onSent: email => console.log('Envoyé', email),
-    })
-  </script>
+  ```bash [Terminal]
+  curl -X POST https://print.exemple.com/api/print-jobs \
+    -H "Authorization: Bearer rpa_…" \
+    -H "X-Impersonate-User: alice@exemple.com" \
+    -F file=@facture.pdf \
+    -F printer=0199… -F copies=2 -F duplex=1
+  # → 201 { "id": "…", "status": "queued", … }
   ```
 ::
 
@@ -57,38 +52,50 @@ Ce que vous pouvez faire
 #features
   :::u-page-feature
   ---
-  icon: i-lucide-square-dashed-mouse-pointer
-  to: /embed/overview
+  icon: i-lucide-network
+  to: /administration/printers
   ---
   #title
-  Composeur embarquable
+  Samba, IPP et CUPS
 
   #description
-  Affichez le composeur dans votre CRM ou votre ERP : vos utilisateurs envoient en leur nom, sans quitter votre application.
+  Imprimantes partagées par un serveur Windows ou Samba (smbclient), imprimantes réseau et files CUPS en IPP, dossier de test.
   :::
 
   :::u-page-feature
   ---
-  icon: i-lucide-shield-check
-  to: /embed/security
+  icon: i-lucide-list-checks
+  to: /printing/print
   ---
   #title
-  Sécurisé par conception
+  Files d'impression asynchrones
 
   #description
-  Secret côté serveur uniquement, jetons courts à portée restreinte, origines autorisées et jamais de droits administrateur.
+  Chaque document passe par une file traitée par le worker : reprises automatiques, annulation, réimpression et historique.
   :::
 
   :::u-page-feature
   ---
-  icon: i-lucide-layout-template
-  to: /administration/templates
+  icon: i-lucide-code
+  to: /api/print-jobs
   ---
   #title
-  Templates visuels versionnés
+  API pour vos applications
 
   #description
-  Créez vos emails avec GrapesJS, partagez-les, restaurez une version précédente et importez-les dans le composeur.
+  Vos applications impriment au nom de leurs utilisateurs (impersonation), sans jamais connaître les imprimantes ni leurs identifiants.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-activity
+  to: /administration/dashboard
+  ---
+  #title
+  Imprimantes surveillées
+
+  #description
+  Chaque imprimante active est vérifiée toutes les 5 minutes et apparaît dans l'état des services du tableau de bord.
   :::
 
   :::u-page-feature
@@ -97,33 +104,21 @@ Ce que vous pouvez faire
   to: /administration/users-ldap
   ---
   #title
-  Comptes locaux et LDAP
+  Comptes locaux, LDAP et SSO
 
   #description
-  Synchronisation avec votre annuaire, connexion par l'annuaire et rôle administrateur piloté par un groupe LDAP.
+  Synchronisation avec votre annuaire, connexion unique via Rocket Auth, rôle administrateur piloté par un groupe.
   :::
 
   :::u-page-feature
   ---
-  icon: i-lucide-key-round
-  to: /api/authentication
+  icon: i-lucide-lock
+  to: /administration/printers#sécurité
   ---
   #title
-  API complète
+  Identifiants protégés
 
   #description
-  Envoyez des emails et gérez les templates via une API REST documentée (OpenAPI), en tant qu'utilisateur ou application.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-history
-  to: /getting-started/introduction#traçabilité
-  ---
-  #title
-  Traçabilité
-
-  #description
-  Chaque objet garde qui l'a créé et modifié, et chaque email l'utilisateur et l'application d'origine.
+  Mots de passe des imprimantes chiffrés en base, jamais renvoyés par l'API ni passés en ligne de commande.
   :::
 ::

@@ -15,6 +15,11 @@ parameters:
     env(SECRETS_ENCRYPTION_KEY): ''
     # Directory of the data written by the application (checked on the dashboard).
     env(DATA_DIR): '%kernel.project_dir%/var/data'
+    # Printing: maximum document size (bytes), retention of the printed documents (days), smbclient, "folder" printers.
+    env(PRINT_MAX_FILE_SIZE): '52428800'
+    env(PRINT_RETENTION_DAYS): '7'
+    env(SMBCLIENT_BINARY): 'smbclient'
+    env(PRINT_FOLDER_ROOT): '%env(DATA_DIR)%/print-folders'
     # Update check (GitHub releases of this repository; empty: disabled) and one-click update (Watchtower HTTP API).
     env(APP_VERSION): ''
     env(UPDATE_REPOSITORY): 'fayouz/rocket-print'
@@ -32,6 +37,10 @@ parameters:
     env(DEMO_SSO_CLIENT_ID): ''
     env(DEMO_SSO_CLIENT_SECRET): ''
     env(DEMO_SSO_ADMIN_GROUP): ''
+    # Demo Samba print server (app:demo:seed): share and account, e.g. //print-server/demo-printer.
+    env(DEMO_SAMBA_PRINTER): ''
+    env(DEMO_SAMBA_USER): ''
+    env(DEMO_SAMBA_PASSWORD): ''
 
 services:
     _defaults:

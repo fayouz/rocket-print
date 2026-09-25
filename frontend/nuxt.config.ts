@@ -27,6 +27,7 @@ export default defineNuxtConfig({
   },
   icon: {
     serverBundle: { collections: ['lucide'] },
-    clientBundle: { scan: true },
+    // Icons named in app.config.ts and utils (menus, statuses) are bundled too, not only those of the components.
+    clientBundle: { scan: { globInclude: ['**/*.vue', '**/app.config.ts', '**/utils/*.ts'], globExclude: ['node_modules', 'dist', '.nuxt', '.output'] } },
   },
 })

@@ -9,6 +9,10 @@ x-demo-env: &demo-env
   LDAP_ENABLED: "1"
   LDAP_ADMIN_GROUP_DN: cn=rocket-admins,ou=groups,dc=example,dc=org
   CORS_ALLOW_ORIGIN: ^http://localhost:3300$$
+  # Samba print server of the demo (print-server below), declared as a printer by app:demo:seed.
+  DEMO_SAMBA_PRINTER: //print-server/demo-printer
+  DEMO_SAMBA_USER: demo
+  DEMO_SAMBA_PASSWORD: &samba-password demo-print-password
 
 services:
   ldap:
@@ -67,6 +71,16 @@ services:
       demo-seed:
         condition: service_completed_successfully
 
+  # A Samba print server: what is printed on "Laser 2e étage (Samba)" lands in the print_server_output volume
+  # (`docker compose exec print-server ls -l /printed`).
+  print-server:
+    build: ./docker/print-server
+    environment:
+      DEMO_SAMBA_PASSWORD: *samba-password
+    volumes:
+      - print_server_output:/printed
+    restart: unless-stopped
+
   # The browser only talks to the front, which proxies /api to the API: one public URL is enough
   # (Codespaces, tunnels…) and no CORS is involved.
   front:
@@ -83,3 +97,6 @@ services:
     restart: unless-stopped
     ports:
       - "3301:80"
+
+volumes:
+  print_server_output:

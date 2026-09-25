@@ -1,13 +1,13 @@
 # Rocket Print
 
-Envoi d'emails en texte enrichi, templates d'email visuels, et composeur embarquable dans des applications tierces.
+Impression vers les imprimantes de l'entreprise, depuis le navigateur ou depuis vos applications : partages **Windows / Samba**, imprimantes réseau et files **CUPS** en **IPP**, files d'impression asynchrones avec reprises et suivi. Brique du Middleware Rocket, sur la même stack que [Rocket Mailer](https://github.com/fayouz/rocket-mailer), [Rocket Auth](https://github.com/fayouz/rocket-auth) et [Rocket Cloud](https://github.com/fayouz/rocket-cloud).
 
 | Dossier | Stack |
 |---|---|
-| `backend/` | Symfony 8.1, API Platform 5, Doctrine ORM 3 (PostgreSQL), StofDoctrineExtensions, LexikJWT, Messenger, Mailer, LDAP |
-| `frontend/` | Nuxt 4, Nuxt UI 4, CKEditor 5 (composeur), GrapesJS + preset newsletter (templates) |
-| `integrations/` | Clients pour les applications appelantes : layer Nuxt (`integrations/nuxt`) et bundle Symfony (`integrations/symfony`), publiés dans des dépôts miroirs par `.github/workflows/split.yml` |
-| `docs/` | Site de documentation (Nuxt UI + Nuxt Content), avec le changelog sur `/changelog` : `cd docs && npm install && npm run dev`, puis http://localhost:3001 |
+| `backend/` | Symfony 8.1, API Platform 5, Doctrine ORM 3 (PostgreSQL), StofDoctrineExtensions, LexikJWT, Messenger et Scheduler, LDAP, `smbclient` |
+| `frontend/` | Nuxt 4, Nuxt UI 4 |
+| `docs/` | Site de documentation (Nuxt UI + Nuxt Content), avec le changelog sur `/changelog` : `cd docs && npm install && npm run dev`, puis http://localhost:3301 |
+| `docker/print-server/` | Serveur d'impression Samba de la démo |
 
 ## Démarrage rapide
 
@@ -15,137 +15,76 @@ Envoi d'emails en texte enrichi, templates d'email visuels, et composeur embarqu
 docker compose up -d --build
 ```
 
-Au premier lancement, http://localhost:3000 affiche la **configuration initiale** : on y crée le compte administrateur (email et mot de passe). Si l'instance est exposée avant d'être configurée, définissez `SETUP_TOKEN` : la page le demandera. L'administrateur peut aussi être créé en ligne de commande : `docker compose exec api php bin/console app:user:create admin@example.org 'un-mot-de-passe-long' --admin`.
+Au premier lancement, http://localhost:3300 affiche la **configuration initiale** : on y crée le compte administrateur. Si l'instance est exposée avant d'être configurée, définissez `SETUP_TOKEN`. L'administrateur peut aussi être créé en ligne de commande : `docker compose exec api php bin/console app:user:create admin@example.org 'un-mot-de-passe-long' --admin`.
 
-- Application : http://localhost:3000
-- API + documentation OpenAPI : http://localhost:8000/api/docs
-- Emails reçus (Mailpit) : http://localhost:8025
+Déclarez ensuite les imprimantes dans **Administration → Imprimantes**.
+
+- Application : http://localhost:3300
+- API + documentation OpenAPI : http://localhost:8300/api/docs
 
 ### Démo prête à tester
 
-`docker compose -f compose.yaml -f compose.demo.yaml up -d --build` lance une démo complète : comptes locaux et LDAP, templates, et une application tierce qui embarque le composeur. Voir [demo/README.md](demo/README.md).
+`docker compose -f compose.yaml -f compose.demo.yaml up -d --build` lance une démo complète : comptes locaux et LDAP, une imprimante « dossier », et un **vrai serveur d'impression Samba** sur lequel imprimer. Voir [demo/README.md](demo/README.md).
 
 ### Développement sans Docker
 
 ```bash
-# backend (PHP 8.4, PostgreSQL)
+# backend (PHP 8.4, PostgreSQL, smbclient pour le connecteur Samba)
 cd backend && composer install
 php bin/console lexik:jwt:generate-keypair
 php bin/console doctrine:migrations:migrate
-echo 'MESSENGER_TRANSPORT_DSN=sync://' >> .env.local   # ou lancer messenger:consume async
-php -S 127.0.0.1:8000 -t public
+echo 'MESSENGER_TRANSPORT_DSN=sync://' >> .env.local   # ou lancer messenger:consume async scheduler_default
+php -S 127.0.0.1:8300 -t public
 php bin/phpunit
 
 # frontend
-cd frontend && npm install && npm run dev            # NUXT_PUBLIC_API_BASE=http://localhost:8000
+cd frontend && npm install && npm run dev -- --port 3300   # NUXT_PUBLIC_API_BASE=http://localhost:8300
 ```
 
 ## Fonctionnalités
 
-### Tableau de bord et suivi des envois
-- **Tableau de bord** (page d'accueil) : envois et délivrabilité sur 30 jours, file d'envoi, intégrations, activité récente, état des services (base, file, SMTP, LDAP, stockage). Un utilisateur y voit ses propres chiffres ; un administrateur, toute la plateforme. API : `GET /api/dashboard`.
-- **Mes envois** et **Tous les envois** (admin) : recherche dans l'objet et les destinataires, filtres par statut, application, expéditeur et période, pagination. Les mêmes filtres existent dans l'API (`GET /api/emails?q=…&status=…`).
+### Imprimantes et connecteurs
+Administration → **Imprimantes** : nom, emplacement, recto verso, couleur, imprimante par défaut, activation, et un connecteur :
 
-### Utilisateurs, LDAP et authentification unique
-- Comptes **locaux** (mot de passe haché), **LDAP** (authentification par bind sur l'annuaire) ou **SSO** : connexion via un fournisseur **OpenID Connect** comme [Rocket Print](https://github.com/fayouz/rocket-print) (Administration → Serveurs d'authentification). Voir `docs/content/5.administration/8.sso.md`.
-- Synchronisation : `php bin/console app:ldap:sync [--dry-run]` (à planifier en cron) ou bouton « Synchroniser LDAP » (admin).
-  Elle crée et met à jour les comptes et désactive ceux qui ont disparu de l'annuaire. Elle ne prend jamais le contrôle d'un compte local portant le même email.
-- `LDAP_ADMIN_GROUP_DN` : les membres de ce groupe (attribut `memberOf`) reçoivent `ROLE_ADMIN`. Vide : les admins sont gérés dans l'application.
-- Configuration dans **Administration → Annuaire LDAP** (stockée en base, mot de passe chiffré, bouton **Tester**). Les variables `LDAP_ENABLED`, `LDAP_URL`, `LDAP_START_TLS`, `LDAP_BASE_DN`, `LDAP_SEARCH_DN`, `LDAP_SEARCH_PASSWORD`, `LDAP_USER_FILTER`, `LDAP_ADMIN_GROUP_DN` et `LDAP_ATTRIBUTE_*` en sont la configuration par défaut.
+| Connecteur | Adresse | Principe |
+|---|---|---|
+| Partage Windows / Samba | `//serveur/imprimante` (`smb://…`, `\\serveur\imprimante`) | `smbclient … -c 'print …'`, compte de service et domaine. Le document est transmis tel quel (PDF, PostScript ou PCL selon l'imprimante). |
+| IPP / CUPS | `ipp://imprimante/ipp/print`, `ipps://…`, `ipp://cups:631/printers/file` | Print-Job IPP/2.0 avec exemplaires, recto verso et couleur ; état et modèle par Get-Printer-Attributes. |
+| Dossier | `tests` (sous `PRINT_FOLDER_ROOT`) | Écrit le document et un `.json` de ses options : tests, démo, archivage. |
 
-### Applications externes et impersonation
-Un administrateur crée une application. Son jeton secret (`rpa_…`) n'est affiché qu'une seule fois, et seul son hash SHA-256 est stocké.
+**Tester la connexion** (sans imprimer) et **Imprimer une page de test** (PDF généré). Les mots de passe sont chiffrés en base (`SECRETS_ENCRYPTION_KEY`), jamais renvoyés par l'API, et passés à `smbclient` par un fichier temporaire `0600`, jamais en ligne de commande. Les imprimantes actives sont vérifiées toutes les 5 minutes (état des services du tableau de bord).
 
-| En-têtes | Effet |
-|---|---|
-| `Authorization: Bearer rpa_…` | L'application s'identifie (accès limité à `GET /api/me`). |
-| `+ X-Impersonate-User: jean@exemple.org` | L'application agit **en tant que** cet utilisateur (si « impersonation » est autorisée). Elle n'obtient **jamais** `ROLE_ADMIN`, même en impersonnant un admin. |
+### Impression et files d'attente
+- **Imprimer** : glisser-déposer, imprimante (par défaut présélectionnée), exemplaires, recto verso, couleur. Formats : PDF, PostScript, PCL, JPEG, PNG, texte ; `PRINT_MAX_FILE_SIZE` (50 Mo).
+- Le **worker** envoie les documents. Échec passager : nouvelle tentative 1 puis 5 minutes plus tard (3 au total) ; échec définitif (identifiants, format refusé) : arrêt immédiat avec l'erreur.
+- **Mes impressions** : statut en direct, recherche, filtres, voir le document, annuler (en attente), réimprimer (échec ou annulé). Les administrateurs voient **Toutes les impressions**.
+- Documents supprimés après `PRINT_RETENTION_DAYS` jours (7) ; l'historique reste.
 
-Chaque email envoyé garde l'utilisateur **et** l'application d'origine. Désactiver une application ou régénérer son jeton coupe l'accès immédiatement.
-
-### Composeur embarqué (widget)
-1. **Côté serveur de l'application tierce** (le secret ne doit jamais aller dans le navigateur) :
-   ```bash
-   curl -X POST https://mailer.exemple.com/api/embed/token \
-     -H "Authorization: Bearer rpa_…" -H "X-Impersonate-User: jean@exemple.org"
-   # → { "token": "<jwt 15 min>", "applicationId": "…", "expiresAt": "…" }
-   ```
-2. **Côté navigateur** :
-   ```html
-   <script src="https://mailer.exemple.com/embed.js"></script>
-   <div id="mailer"></div>
-   <script>
-     RocketMailer.mount('#mailer', {
-       baseUrl: 'https://mailer.exemple.com',
-       applicationId: '<uuid de l’application>',
-       getToken: () => fetch('/mon-backend/rocket-print-token').then(r => r.json()).then(d => d.token),
-       draft: { to: ['client@exemple.com'], subject: 'Votre devis' }, // optionnel
-       onSent: (email) => console.log('envoyé', email),               // optionnel
-     })
-   </script>
-   ```
-
-Ou, avec le **web component** défini par le même script :
-
-```html
-<rocket-print-composer application-id="<uuid>" token-url="/mon-backend/rocket-print-token"></rocket-print-composer>
+### API pour les applications
+```bash
+curl -X POST https://print.exemple.com/api/print-jobs \
+  -H "Authorization: Bearer rpa_…" -H "X-Impersonate-User: alice@exemple.com" -H "Accept: application/json" \
+  -F file=@facture.pdf -F printer=<id> -F copies=2 -F duplex=1
 ```
+`GET /api/printers`, `GET /api/print-jobs[/{id}]`, `POST /api/print-jobs/{id}/cancel|retry`, `GET /api/print-jobs/{id}/content`, et pour les administrateurs `/api/admin/printers` (CRUD, `check`, `test-page`). Voir `docs/content/4.api/2.print-jobs.md`.
 
-Pour une application Nuxt ou Symfony, utilisez plutôt les clients de `integrations/` : ils fournissent le composant, l'endpoint de jeton et l'envoi côté serveur. Le bouton **Intégrer** du composeur génère le code pour une application donnée.
-
-Sécurité du composeur embarqué :
-- **Origines autorisées :** la page `/embed/compose` n'est affichable que depuis les origines déclarées sur l'application (`Content-Security-Policy: frame-ancestors`). Toutes les autres pages envoient `frame-ancestors 'none'`.
-- **Transmission du jeton :** le jeton passe par `postMessage` ; l'iframe n'accepte que les messages venant de `window.parent` et d'une origine autorisée. Il reste en mémoire (pas de cookie, pas d'URL) et il est renouvelé automatiquement via `getToken` quand il expire.
-- **Jeton d'embed :** c'est un JWT à scope `embed`, envoyé avec `Authorization: Embed <jwt>`. Il ne peut que lister et lire les templates, envoyer un email et lire ses propres envois. Il est refusé comme session utilisateur (`Bearer`) et révoqué dès que l'application est désactivée.
-
-### Adresse d'expédition (« De »)
-- Le composeur a une liste **De**. Elle propose les adresses d'expédition des **Réglages** (l'adresse par défaut est présélectionnée) et l'adresse de l'utilisateur, sauf si les Réglages l'interdisent.
-- À l'installation, `MAILER_DEFAULT_FROM="Nom <adresse>"` crée l'adresse par défaut. On la gère ensuite dans les Réglages.
-- Une application peut imposer l'adresse à la volée, avec `setDraft({ from })` ou le champ `from` de l'API, dans la limite de ses **adresses d'expédition autorisées** (`contact@…` ou `*@domaine`). Toute autre adresse est refusée. Les réponses reviennent à l'utilisateur (`Reply-To`).
-
-### Version et mises à jour
-- Version affichée en bas du menu (`git describe --tags`, inscrite dans les images par la CI). Administration → **Mises à jour** la compare aux versions publiées sur GitHub (`UPDATE_REPOSITORY`).
-- Bouton **Mettre à jour**, avec trois méthodes au choix :
-  - **Docker** : service optionnel `updater` (Watchtower), `UPDATER_TOKEN=… docker compose --profile updater up -d`, avec les images ghcr.io (`API_IMAGE`, `FRONT_IMAGE`) ;
-  - **sans Docker** : cron `php bin/console app:update:run`, qui lance `deploy/update.sh` ;
-  - **manuelle**.
-
-### Boîtes d'envoi
-- Administration → **Boîtes d'envoi** : de vrais comptes email (SMTP, ou fournisseur par DSN : Brevo, SES, Mailjet, SendGrid, Postmark, Mailgun), avec copie de chaque email dans leur dossier « Envoyés » par IMAP.
-- Rattachées à des applications, elles apparaissent dans la liste « De » de leur composeur (ou pour tous les utilisateurs). API : `mailbox` dans `POST /api/emails` ; widget : `setDraft({ mailbox })`.
-- Mots de passe chiffrés en base avec `MAILBOX_ENCRYPTION_KEY` (vide : dérivée de `APP_SECRET`).
-
-### Pièces jointes
-- Dans le composeur (application et widget), avec le bouton **Joindre des fichiers** ou par glisser-déposer : 10 fichiers, 10 Mo par fichier et 25 Mo par email par défaut. Les exécutables et scripts sont refusés.
-- Une application peut joindre un document qu'elle génère, par exemple un devis PDF. Son backend le téléverse au nom de l'utilisateur, puis la page le passe au widget avec `setDraft({ attachments: [id] })`.
-- Stockage sur disque dans `ATTACHMENTS_DIR`, un volume partagé entre l'API et le worker. Les fichiers jamais envoyés sont purgés par `app:attachments:purge`.
-
-### Templates d'email
-- Éditeur visuel GrapesJS (preset newsletter). On stocke le projet GrapesJS (réédition) et le HTML email avec CSS inliné (import).
-- Import dans le composeur via « Importer un template » : le contenu arrive dans CKEditor, qui conserve le balisage d'email grâce à General HTML Support.
-- Templates privés ou partagés ; seul le propriétaire (ou un admin) les modifie.
-- **Variables** `{{ client.prenom }}` : insérées avec le bouton **{x}** de l'éditeur, avec un libellé et une valeur par défaut. Les valeurs viennent du composeur, de l'application qui l'embarque (`setDraft({ template, variables })`) ou de l'API (`POST /api/emails` avec `template` et `variables`).
-- **Layouts** (Administration → Layouts d'email) : enveloppe HTML commune avec l'emplacement `{{ content }}`, choisie par template ; le composeur et l'API utilisent le HTML final (`renderedHtml`).
-- **Versionnés** (Gedmo Loggable) : `GET /api/email_templates/{id}/versions` et `POST …/versions/{n}/restore`.
-
-### Traçabilité
-Toutes les entités sont **Timestampable** et **Blameable** (`createdAt`, `updatedAt`, `createdBy`, `updatedBy`) via StofDoctrineExtensionsBundle. Seuls les templates sont versionnés.
+### Socle commun Rocket
+- **Comptes** locaux, **LDAP** (synchronisation, rôle admin par groupe) et **SSO OpenID Connect** (Rocket Auth ou tout fournisseur).
+- **Applications externes** : jeton `rpa_…` (seul son hash est stocké) et impersonation par `X-Impersonate-User`, jamais avec le rôle administrateur.
+- **Tableau de bord** : impressions, taux de réussite, file, échecs, état des services (base, tâches de fond, LDAP, SSO, imprimantes, stockage).
+- **Version et mises à jour** : Docker (Watchtower, profil `updater`), serveur sans Docker (`deploy/update.sh`) ou manuelle.
+- **Traçabilité** : toutes les entités sont Timestampable et Blameable.
 
 ## CI/CD
 
 `.github/workflows/ci.yml` :
-- à chaque push et pull request : lint du container, validation du schéma Doctrine, PHPUnit, puis ESLint, typecheck et build Nuxt ;
-- sur `main`, `develop` et les tags `v*` : build et push des images sur **ghcr.io** :
-  - `ghcr.io/fayouz/rocket-print-api`
-  - `ghcr.io/fayouz/rocket-print-front`
+- à chaque push et pull request : lint du container, validation du schéma Doctrine, PHPUnit, puis ESLint, typecheck et build du front et de la documentation ; la démo complète est lancée et on y imprime sur le serveur Samba ;
+- sur `main`, `develop` et les tags `v*` : images `ghcr.io/fayouz/rocket-print-api` et `ghcr.io/fayouz/rocket-print-front`.
 
-  Les tags d'image suivent le nom de branche, le semver, le sha court, et `latest` pour `main`.
-
-Le worker utilise l'image API avec `php bin/console messenger:consume async scheduler_default` (envois, et tâches planifiées comme les vérifications de santé).
+Le worker utilise l'image API avec `php bin/console messenger:consume async scheduler_default`.
 
 ## Gitflow
 
-- `main` : production (images `latest` et tags `vX.Y.Z`)
-- `develop` : intégration (images `develop`)
-- `feature/*` : une fonctionnalité, en pull request vers `develop`. Chaque pull request complète la section `[Non publié]` de [CHANGELOG.md](CHANGELOG.md) (format [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)), publiée sur la page `/changelog` de la documentation.
-- `release/*` et `hotfix/*` : préparation de version et correctifs vers `main`. À la release, `[Non publié]` devient `[X.Y.Z] - date`, puis on tague `vX.Y.Z`.
+- `main` : production (images `latest` et tags `vX.Y.Z`) ; `develop` : intégration.
+- `feature/*` : pull request vers `develop`, qui complète la section `[Non publié]` de [CHANGELOG.md](CHANGELOG.md), publiée sur `/changelog` dans la documentation.
+- `release/*` et `hotfix/*` vers `main` : `[Non publié]` devient `[X.Y.Z] - date`, puis tag `vX.Y.Z`.

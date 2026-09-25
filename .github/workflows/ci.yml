@@ -204,8 +204,8 @@ jobs:
           # Documentation site, with the changelog
           curl -fsS $DOCS/changelog | grep -q 'Dernière version'
           # Network health checks (also run by the worker's scheduler): the real OpenLDAP
-          curl -fsS -X POST $FRONT/api/health/check -H "Authorization: Bearer $TOKEN" \
-            | jq -e '[.services[] | select(.id == "ldap") | .status] == ["operational"]'
+          curl -fsS -X POST $FRONT/api/health/check -H "Authorization: Bearer $TOKEN" > health.json
+          jq -e '[.services[] | select(.id == "ldap") | .status] == ["operational"]' health.json || { jq . health.json; exit 1; }
           $COMPOSE exec -T api php bin/console app:health:check
           # Dashboard: the whole platform and service details for admins
           curl -fsS $FRONT/api/dashboard -H "Authorization: Bearer $TOKEN" \

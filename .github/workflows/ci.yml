@@ -178,8 +178,9 @@ jobs:
         run: |
           $COMPOSE up -d --build
           test "$(docker wait "$($COMPOSE ps -aq demo-seed)")" = 0
-          for i in $(seq 1 60); do curl -fsS $FRONT/login -o /dev/null && exit 0; sleep 2; done
-          echo "Front never became ready" && exit 1
+          # Ready when the front answers and its /api proxy reaches the API (which starts after the front's container).
+          for i in $(seq 1 60); do curl -fsS $FRONT/login -o /dev/null && curl -fsS $FRONT/api/setup -o /dev/null && exit 0; sleep 2; done
+          echo "Front or API never became ready" && exit 1
       - name: Check demo scenarios
         run: |
           set -x

@@ -3,7 +3,7 @@
 namespace App\Print;
 
 use App\Entity\Printer;
-use App\Security\SecretBox;
+use Rocket\Core\Security\SecretBox;
 
 /** The decrypted password of a printer, for its connector. */
 final class PrinterSecrets

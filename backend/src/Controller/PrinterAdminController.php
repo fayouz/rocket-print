@@ -7,7 +7,7 @@ use App\Print\Connector\PrinterConnectors;
 use App\Print\PrintException;
 use App\Print\PrintSpooler;
 use App\Print\TestPage;
-use App\Security\ActorContext;
+use Rocket\Core\Security\ActorContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Filesystem\Filesystem;

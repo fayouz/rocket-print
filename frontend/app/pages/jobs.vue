@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { PrintJob, PrintJobStatus } from '~/types/api'
+import type { PrintJob, PrintJobStatus } from '~/types/print'
 
 const appName = useAppConfig().rocket.name
 const route = useRoute()

@@ -33,6 +33,8 @@ jobs:
     env:
       APP_ENV: test
       DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app?serverVersion=16&charset=utf8
+      # rocket/core-bundle comes from GitHub: authenticated downloads are not rate-limited.
+      COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2

@@ -1,4 +1,4 @@
-import type { PrintJobStatus } from '~/types/api'
+import type { PrintJobStatus } from '~/types/print'
 
 export const PRINT_JOB_STATUS: Record<PrintJobStatus, { label: string, color: 'neutral' | 'info' | 'success' | 'error' | 'warning', icon: string }> = {
   queued: { label: 'En attente', color: 'neutral', icon: 'i-lucide-clock' },

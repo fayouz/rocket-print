@@ -7,7 +7,7 @@ use App\Message\PrintDocument;
 use App\Print\DocumentStorage;
 use App\Print\PrintSpooler;
 use App\Repository\PrinterRepository;
-use App\Security\ActorContext;
+use Rocket\Core\Security\ActorContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;

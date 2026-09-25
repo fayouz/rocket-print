@@ -4,7 +4,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Printer;
 use App\Entity\PrintJob;
-use App\Entity\User;
+use Rocket\Core\Entity\User;
 use App\Enum\PrinterConnectorType;
 use App\Enum\PrintJobStatus;
 use App\Message\CleanUpPrintJobs;

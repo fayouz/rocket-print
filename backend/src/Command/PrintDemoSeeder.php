@@ -2,12 +2,13 @@
 
 namespace App\Command;
 
+use Rocket\Core\Command\DemoSeederInterface;
 use App\Entity\Printer;
 use App\Enum\PrinterConnectorType;
 use App\Print\PrintSpooler;
 use App\Print\TestPage;
 use App\Repository\PrinterRepository;
-use App\Security\SecretBox;
+use Rocket\Core\Security\SecretBox;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;

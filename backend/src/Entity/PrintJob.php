@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use Rocket\Core\Entity\Application;
+use Rocket\Core\Entity\User;
+use Rocket\Core\Entity\TrackedTrait;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;

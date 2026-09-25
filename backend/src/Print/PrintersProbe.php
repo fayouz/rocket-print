@@ -2,7 +2,7 @@
 
 namespace App\Print;
 
-use App\Health\ServiceProbeInterface;
+use Rocket\Core\Health\ServiceProbeInterface;
 use App\Print\Connector\PrinterConnectors;
 use App\Repository\PrinterRepository;
 

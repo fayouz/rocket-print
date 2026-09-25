@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Printer, PrintJob, PrintSettings } from '~/types/api'
+import type { Printer, PrintJob, PrintSettings } from '~/types/print'
 
 const appName = useAppConfig().rocket.name
 useHead({ title: `Imprimer · ${appName}` })

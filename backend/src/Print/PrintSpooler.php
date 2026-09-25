@@ -2,10 +2,10 @@
 
 namespace App\Print;
 
-use App\Entity\Application;
+use Rocket\Core\Entity\Application;
 use App\Entity\Printer;
 use App\Entity\PrintJob;
-use App\Entity\User;
+use Rocket\Core\Entity\User;
 use App\Message\PrintDocument;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;

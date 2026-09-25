@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { AdminPrinter, PrinterConnector, PrintJob } from '~/types/api'
+import type { AdminPrinter, PrinterConnector, PrintJob } from '~/types/print'
 
 definePageMeta({ admin: true })
 const appName = useAppConfig().rocket.name

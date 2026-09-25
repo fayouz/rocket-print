@@ -1,0 +1,4 @@
+rocket_core:
+    app_name: Rocket Print
+    app_id: print
+    token_prefix: rpa_

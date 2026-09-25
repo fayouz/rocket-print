@@ -9,6 +9,8 @@ Impression vers les imprimantes de l'entreprise, depuis le navigateur ou depuis 
 | `docs/` | Site de documentation (Nuxt UI + Nuxt Content), avec le changelog sur `/changelog` : `cd docs && npm install && npm run dev`, puis http://localhost:3301 |
 | `docker/print-server/` | Serveur d'impression Samba de la démo |
 
+Le socle commun (comptes, LDAP, SSO, applications, tableau de bord, mises à jour, modes autonome et suite) vient de **[rocket-core](https://github.com/fayouz/rocket-core)** : le bundle Symfony `rocket/core-bundle` (Composer) et le layer Nuxt `@rocket/core` (npm). Pour travailler sur les deux à la fois : `ROCKET_CORE_LAYER=../../rocket-core/nuxt npm run dev` côté front, et un dépôt `path` Composer côté backend.
+
 ## Démarrage rapide
 
 ```bash
@@ -68,7 +70,7 @@ curl -X POST https://print.exemple.com/api/print-jobs \
 ```
 `GET /api/printers`, `GET /api/print-jobs[/{id}]`, `POST /api/print-jobs/{id}/cancel|retry`, `GET /api/print-jobs/{id}/content`, et pour les administrateurs `/api/admin/printers` (CRUD, `check`, `test-page`). Voir `docs/content/4.api/2.print-jobs.md`.
 
-### Socle commun Rocket
+### Socle commun Rocket (rocket-core)
 - **Comptes** locaux, **LDAP** (synchronisation, rôle admin par groupe) et **SSO OpenID Connect** (Rocket Auth ou tout fournisseur).
 - **Applications externes** : jeton `rpa_…` (seul son hash est stocké) et impersonation par `X-Impersonate-User`, jamais avec le rôle administrateur.
 - **Tableau de bord** : impressions, taux de réussite, file, échecs, état des services (base, tâches de fond, LDAP, SSO, imprimantes, stockage).

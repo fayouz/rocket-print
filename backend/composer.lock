@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "38710101f52d731f83febb7a35d42a53",
+    "content-hash": "094b02274b9c0400f91cb3308be3070e",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -3472,6 +3472,83 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
+        },
+        {
+            "name": "rocket/core-bundle",
+            "version": "dev-claude/practical-cray-rz3j2q",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fayouz/rocket-core.git",
+                "reference": "4ff2151fd4a3f5374e43cc2f0149c224683ad0d8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fayouz/rocket-core/zipball/4ff2151fd4a3f5374e43cc2f0149c224683ad0d8",
+                "reference": "4ff2151fd4a3f5374e43cc2f0149c224683ad0d8",
+                "shasum": ""
+            },
+            "require": {
+                "api-platform/doctrine-orm": "^5.0",
+                "api-platform/symfony": "^5.0",
+                "doctrine/doctrine-bundle": "^3.3",
+                "doctrine/doctrine-migrations-bundle": "^4.0",
+                "doctrine/orm": "^3.7",
+                "ext-sodium": "*",
+                "lexik/jwt-authentication-bundle": "^3.2",
+                "php": ">=8.4",
+                "stof/doctrine-extensions-bundle": "^1.15",
+                "symfony/console": "8.1.*",
+                "symfony/doctrine-messenger": "8.1.*",
+                "symfony/expression-language": "8.1.*",
+                "symfony/framework-bundle": "8.1.*",
+                "symfony/http-client": "8.1.*",
+                "symfony/ldap": "8.1.*",
+                "symfony/lock": "8.1.*",
+                "symfony/messenger": "8.1.*",
+                "symfony/mime": "8.1.*",
+                "symfony/process": "8.1.*",
+                "symfony/scheduler": "8.1.*",
+                "symfony/security-bundle": "8.1.*",
+                "symfony/serializer": "8.1.*",
+                "symfony/uid": "8.1.*",
+                "symfony/validator": "8.1.*"
+            },
+            "require-dev": {
+                "dama/doctrine-test-bundle": "^8.6",
+                "nelmio/cors-bundle": "^2.6",
+                "phpdocumentor/reflection-docblock": "^6.0",
+                "phpstan/phpdoc-parser": "^2.3",
+                "phpunit/phpunit": "^13.3",
+                "symfony/asset": "8.1.*",
+                "symfony/browser-kit": "8.1.*",
+                "symfony/css-selector": "8.1.*",
+                "symfony/dotenv": "8.1.*",
+                "symfony/monolog-bundle": "^4.1",
+                "symfony/property-access": "8.1.*",
+                "symfony/property-info": "8.1.*",
+                "symfony/twig-bundle": "8.1.*",
+                "symfony/yaml": "8.1.*"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Rocket\\Core\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Rocket\\Core\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "The platform shared by the Rocket applications: accounts (local, LDAP, OpenID Connect), external applications and impersonation, dashboard, health checks, updates, standalone and suite modes.",
+            "support": {
+                "source": "https://github.com/fayouz/rocket-core/tree/claude/practical-cray-rz3j2q",
+                "issues": "https://github.com/fayouz/rocket-core/issues"
+            },
+            "time": "2026-09-25T22:47:15+00:00"
         },
         {
             "name": "stof/doctrine-extensions-bundle",
@@ -11350,13 +11427,15 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "rocket/core-bundle": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.4",
         "ext-ctype": "*",
-        "ext-iconv": "*"
+        "ext-iconv": "*",
+        "php": ">=8.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"

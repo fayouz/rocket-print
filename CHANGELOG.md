@@ -4,6 +4,10 @@ Toutes les évolutions notables de Rocket Print. Le format suit [Keep a Changelo
 
 ## [Non publié]
 
+### Ajouté
+
+- Mode suite : déconnexion depuis Rocket Auth (back-channel logout). Se déconnecter de Rocket Auth, ou y être désactivé, ferme les sessions dans Rocket Print (`ROCKET_INTERNAL_URL`).
+
 ## [0.1.0] - 2026-09-25
 
 Première version de Rocket Print, la brique d'impression du Middleware Rocket.

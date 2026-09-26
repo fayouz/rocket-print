@@ -23,6 +23,8 @@ x-api-env: &api-env
   ROCKET_AUTH_CLIENT_SECRET: ${ROCKET_AUTH_CLIENT_SECRET:-}
   ROCKET_AUTH_ADMIN_GROUP: ${ROCKET_AUTH_ADMIN_GROUP:-rocket-admins}
   ROCKET_LOCAL_LOGIN: ${ROCKET_LOCAL_LOGIN:-0}
+  # Address of Rocket Print as Rocket Auth reaches it (back-channel logout). Empty: FRONTEND_URL.
+  ROCKET_INTERNAL_URL: ${ROCKET_INTERNAL_URL:-}
   CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$$}
   LDAP_ENABLED: ${LDAP_ENABLED:-0}
   LDAP_URL: ${LDAP_URL:-ldap://ldap:389}

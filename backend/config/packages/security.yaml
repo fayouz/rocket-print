@@ -40,6 +40,7 @@ security:
         - { path: ^/api/auth/(providers|oidc/callback|oidc/backchannel-logout)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/theme$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

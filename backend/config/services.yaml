@@ -1,0 +1,23 @@
+parameters:
+    # Printing: maximum document size (bytes), retention of the printed documents (days), smbclient, "folder" printers.
+    env(PRINT_MAX_FILE_SIZE): '52428800'
+    env(PRINT_RETENTION_DAYS): '7'
+    env(SMBCLIENT_BINARY): 'smbclient'
+    env(PRINT_FOLDER_ROOT): '%env(DATA_DIR)%/print-folders'
+    env(UPDATE_REPOSITORY): 'fayouz/rocket-print'
+    # Demo Samba print server (app:demo:seed): share and account, e.g. //print-server/demo-printer.
+    env(DEMO_SAMBA_PRINTER): ''
+    env(DEMO_SAMBA_USER): ''
+    env(DEMO_SAMBA_PASSWORD): ''
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+when@test:
+    services:
+        App\Tests\Support\HttpMock: ~
